@@ -44,14 +44,37 @@ async function createBlog(req, res) {
   }
 }
 
+// async function getBlogs(req, res) {
+//   try {
+//     // const blogs = await Blog.find({ draft: false }).populate("creator");
+//     const blogs = await Blog.find({ draft: false }).populate({
+//       path: "creator",
+//       select: "-password",
+//     });
+
+//     return res.status(200).json({
+//       message: "Blogs fetched Successfully",
+//       blogs,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       message: error.message,
+//     });
+//   }
+// }
+
 async function getBlogs(req, res) {
   try {
     // const blogs = await Blog.find({ draft: false }).populate("creator");
-    const blogs = await Blog.find({ draft: false }).populate({
-      path: "creator",
-      select: "-password",
-    });
-
+    const blogs = await Blog.find({ draft: false })
+      .populate({
+        path: "creator",
+        select: "-password",
+      })
+      .populate({
+        path: "likes",
+        select: "email name",
+      });
     return res.status(200).json({
       message: "Blogs fetched Successfully",
       blogs,
@@ -65,8 +88,19 @@ async function getBlogs(req, res) {
 
 async function getBlog(req, res) {
   try {
-    const { id } = req.params;
-    const blog = await Blog.findOne({ id });
+    const { blogId } = req.params;
+    const blog = await Blog.findOne({ blogId })
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "creator",
+        select: "name email",
+      });
 
     if (!blog) {
       return res.status(404).json({
@@ -159,11 +193,47 @@ async function deleteBlog(req, res) {
   }
 }
 
+async function likeBlog(req, res) {
+  try {
+    const creator = req.user;
+    const { id } = req.params;
+
+    const blog = await Blog.findById(id);
+
+    if (!blog) {
+      return res.status(500).json({
+        message: "Blog is not found",
+      });
+    }
+    // console.log(blog.likes);
+    // console.log(blog.likes.includes(creator));
+
+    if (!blog.likes.includes(creator)) {
+      await Blog.findByIdAndUpdate(id, { $push: { likes: creator } });
+      return res.status(200).json({
+        success: true,
+        message: "Blog Liked successfully",
+        isLiked: true,
+      });
+    } else {
+      await Blog.findByIdAndUpdate(id, { $pull: { likes: creator } });
+      return res.status(200).json({
+        success: true,
+        message: "Blog DisLiked successfully",
+        isLiked: false,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+}
 module.exports = {
   createBlog,
   deleteBlog,
   getBlog,
   getBlogs,
   updateBlog,
-  //   likeBlog,
+  likeBlog,
 };

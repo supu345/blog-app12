@@ -20,6 +20,20 @@ const blogSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    comments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
     blogId: {
       type: String,
       unique: true, // Ensure this field is unique if necessary
