@@ -84,39 +84,86 @@ async function getBlog(req, res) {
   }
 }
 
-// async function updateBlog(req, res) {
-//     try {
-//             const creator = req.user;
-//             // console.log(creator);
-//             const { id } = req.params;
+async function updateBlog(req, res) {
+  try {
+    const creator = req.user;
+    console.log(creator);
+    const { id } = req.params;
 
-//             const { title, description, draft , blogId} = req.body;
+    const { title, description, draft } = req.body;
+    const user = await User.findById(creator).select("-password");
+    console.log(user);
 
-// const blog = await Blog.findOne({ blogId: id });
+    console.log(user.blogs.find((blogId) => blogId === id));
 
-// if (!blog) {
-//   return res.status(500).json({
-//     message: "Blog is not found",
-//   });
-// }
+    const blog = await Blog.findById(id);
+    console.log(blog);
+    if (!blog) {
+      return res.status(500).json({
+        message: "Blog is not found",
+      });
+    }
 
-// if (!(creator == blog.creator)) {
-//   return res.status(500).json({
-//     message: "You are not authorized for this action",
-//   });
-// }
+    if (!(creator == blog.creator)) {
+      return res.status(500).json({
+        message: "You are not authorized for this action",
+      });
+    }
 
-//     } catch (error) {
-//          return res.status(500).json({
-//            message: error.message,
-//          });
-//     }
-// }
+    blog.title = title || blog.title;
+    blog.description = description || blog.description;
+    blog.draft = draft || blog.draft;
+
+    await blog.save();
+    return res.status(200).json({
+      success: true,
+      message: "Blog updated successfully",
+      blog,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+}
+
+async function deleteBlog(req, res) {
+  try {
+    const creator = req.user;
+    const { id } = req.params;
+
+    const blog = await Blog.findById(id);
+    if (!blog) {
+      return res.status(500).json({
+        message: "Blog is not found",
+      });
+    }
+
+    if (creator != blog.creator) {
+      return res.status(500).json({
+        message: "You are not authorized for this action",
+      });
+    }
+
+    await Blog.findByIdAndDelete(id);
+    await User.findByIdAndUpdate(creator, { $pull: { blogs: id } });
+
+    return res.status(200).json({
+      success: true,
+      message: "Blog deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+}
+
 module.exports = {
   createBlog,
-  //   deleteBlog,
+  deleteBlog,
   getBlog,
   getBlogs,
-  //   updateBlog,
+  updateBlog,
   //   likeBlog,
 };
