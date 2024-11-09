@@ -14,12 +14,13 @@ const {
   editComment,
   likeComment,
 } = require("../controllers/commentController");
+const upload = require("../utils/multer");
 
 const route = express.Router();
-route.post("/blogs", createBlog);
+route.post("/blogs", verifyUser, upload.single("image"), createBlog);
 route.get("/blogs", getBlogs);
 route.get("/blogs/:blogId", getBlog);
-route.patch("/blogs/:id", verifyUser, updateBlog);
+route.patch("/blogs/:id", verifyUser, upload.single("image"), updateBlog);
 route.delete("/blogs/:id", verifyUser, deleteBlog);
 
 //like

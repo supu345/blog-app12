@@ -1,23 +1,24 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-async function generateJWT(payload) {
-  let token = await jwt.sign(payload, process.env.JWT_SECRET);
-  return token;
+function generateJWT(payload) {
+  // Return the generated token synchronously
+  return jwt.sign(payload, process.env.JWT_SECRET);
 }
 
-async function verifyJWT(token) {
+function verifyJWT(token) {
   try {
-    let data = await jwt.verify(token, process.env.JWT_SECRET);
-    return data;
+    // Verify the token synchronously
+    return jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
-    return false;
+    // Return an error or handle it accordingly
+    return { success: false, message: "Invalid or expired token" };
   }
 }
 
-async function decodeJWT(token) {
-  let decoded = await jwt.decode(token);
-  return decoded;
+function decodeJWT(token) {
+  // Decode the token without verification (doesn't check the signature)
+  return jwt.decode(token);
 }
 
 module.exports = { generateJWT, verifyJWT, decodeJWT };

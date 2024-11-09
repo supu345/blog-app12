@@ -70,40 +70,25 @@ async function login(req, res) {
   const { password, email } = req.body;
 
   try {
-    if (!password) {
+    if (!password || !email) {
       return res.status(400).json({
         success: false,
-        message: "Please enter the password",
-      });
-    }
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Please enter the email",
+        message: "Please enter both email and password",
       });
     }
 
     const checkForexistingUser = await User.findOne({ email });
-
     if (!checkForexistingUser) {
       return res.status(400).json({
         success: false,
-        message: "User not exist",
+        message: "User does not exist",
       });
     }
-    // if (!(checkForexistingUser.password == password)) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Incorrect password",
-    // });
-    // }
 
-    let checkForPass = await bcrypt.compare(
+    const checkForPass = await bcrypt.compare(
       password,
       checkForexistingUser.password
     );
-
     if (!checkForPass) {
       return res.status(400).json({
         success: false,
@@ -111,22 +96,20 @@ async function login(req, res) {
       });
     }
 
-    let token = await generateJWT({
+    const token = await generateJWT({
       email: checkForexistingUser.email,
       id: checkForexistingUser._id,
     });
 
-    // => #, A, a ,1 , 6 <-> 20
-
     return res.status(200).json({
       success: true,
-      message: "logged in successfully",
+      message: "Logged in successfully",
       user: {
         id: checkForexistingUser._id,
         name: checkForexistingUser.name,
         email: checkForexistingUser.email,
-        token,
       },
+      token, // Moved token outside the user object
     });
   } catch (err) {
     return res.status(500).json({
